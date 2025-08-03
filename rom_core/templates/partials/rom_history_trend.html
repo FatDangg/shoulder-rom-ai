@@ -1,0 +1,204 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ROM Trend</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .btn-group { margin: 20px; }
+        .btn-group button {
+            margin: 0 4px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #e5e9f2;
+            cursor: pointer;
+        }
+        .btn-group .active { background: #4a90e2; color: #fff; }
+        .homebnt {margin: 20px;}
+        .homebnt button {
+            margin: 0 4px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #4a90e2;
+            cursor: pointer;
+            color: #fff;
+        }
+        #chart-container {
+            width:98vw;
+            max-width: 520px;   /* reduce from 1000px */
+            margin: 32px auto;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 18px #e4e8f4;
+            padding: 18px 6px 6px 6px;
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- <pre>{{ rom_flexion_data }}</pre> -->
+    <h2>Shoulder ROM Trend</h2>
+    <div class="homebnt">
+        <button id="btn-log" class="active" onclick="location.href='{% url 'rom_history_log' %}';">View Log</button>
+        <button id="btn-dash" class="active" onclick="location.href='{% url 'patient_dashboard' %}';">Back to Dashboard</button>
+    </div>
+    <div class="btn-group">
+        <button id="btn-all" class="active" onclick="showAllLines()">All</button>
+        <button id="btn-flexion" onclick="showOnlyLine('flexion')">Flexion</button>
+        <button id="btn-extension" onclick="showOnlyLine('extension')">Extension</button>
+        <button id="btn-abduction" onclick="showOnlyLine('abduction')">Abduction</button>
+        <button id="btn-adduction" onclick="showOnlyLine('adduction')">Adduction</button>
+    </div>
+    <div style="display:flex; gap:40px; justify-content:center; margin:20px 0;">
+    {% for rom, item in rom_summary.items %}
+        <div style="text-align:center;">
+            <div style="font-size:1.1em;"><b>{{ rom|title }}</b></div>
+            <div style="font-size:2em;">
+                {{ item.value|floatformat:1 }}°
+                {% if item.trend == "up" %}
+                    <span style="color:green;">&#8593;</span>
+                {% elif item.trend == "down" %}
+                    <span style="color:red;">&#8595;</span>
+                {% else %}
+                    <span style="color:#aaa;">&#8596;</span>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+    <div id="chart-container">
+        <canvas id="romChart" height="350"></canvas>
+    </div>
+    <script>
+        const romTests = [
+            {% for test in rom_tests %}
+                {
+                    timestamp: "{{ test.timestamp|date:'Y-m-d H:i' }}",
+                    flexion: {{ test.flexion }},
+                    extension: {{ test.extension }},
+                    abduction: {{ test.abduction }},
+                    adduction: {{ test.adduction }}
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        const labels = romTests.map(t => t.timestamp);
+        const flexion = romTests.map(t => t.flexion);
+        const extension = romTests.map(t => t.extension);
+        const abduction = romTests.map(t => t.abduction);
+        const adduction = romTests.map(t => t.adduction);
+
+        const ctx = document.getElementById('romChart').getContext('2d');
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Flexion',
+                        data: flexion,
+                        borderColor: '#4a90e2',
+                        fill: false,
+                        hidden: false,
+                    },
+                    {
+                        label: 'Extension',
+                        data: extension,
+                        borderColor: '#27ae60',
+                        fill: false,
+                        hidden: false,
+                    },
+                    {
+                        label: 'Abduction',
+                        data: abduction,
+                        borderColor: '#f39c12',
+                        fill: false,
+                        hidden: false,
+                    },
+                    {
+                        label: 'Adduction',
+                        data: adduction,
+                        borderColor: '#e74c3c',
+                        fill: false,
+                        hidden: false,
+                    }
+                ]
+            },
+            options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: 'ROM Progress Over Time' },
+                annotation: {
+                    annotations: {
+                        flexion_range: {
+                            type: 'box',
+                            yMin: 0,
+                            yMax: 180,
+                            backgroundColor: 'rgba(100,255,100,0.08)',
+                            borderWidth: 0,
+                            label: { content: "Flexion Normal", enabled: false }
+                        },
+                        extension_range: {
+                            type: 'box',
+                            yMin: 0,
+                            yMax: 60,
+                            backgroundColor: 'rgba(255,255,100,0.08)',
+                            borderWidth: 0,
+                            label: { content: "Extension Normal", enabled: false }
+                        },
+                        abduction_range: {
+                            type: 'box',
+                            yMin: 0,
+                            yMax: 180,
+                            backgroundColor: 'rgba(100,200,255,0.08)',
+                            borderWidth: 0,
+                            label: { content: "Abduction Normal", enabled: false }
+                        },
+                        adduction_range: {
+                            type: 'box',
+                            yMin: 0,
+                            yMax: 30,
+                            backgroundColor: 'rgba(255,100,100,0.08)',
+                            borderWidth: 0,
+                            label: { content: "Adduction Normal", enabled: false }
+                        }
+                    }
+                }
+            },
+            scales: {
+                        x: {
+                            title: { display: true, text: 'Test Date' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Degrees (°)' }
+                        }
+                    }
+        }
+
+        };
+        const romChart = new Chart(ctx, chartConfig);
+
+        function showAllLines() {
+            chartConfig.data.datasets.forEach(ds => ds.hidden = false);
+            romChart.update();
+            setActive('btn-all');
+        }
+        function showOnlyLine(type) {
+            const types = ['flexion', 'extension', 'abduction', 'adduction'];
+            chartConfig.data.datasets.forEach((ds, i) => ds.hidden = types[i] !== type);
+            romChart.update();
+            setActive('btn-' + type);
+        }
+        function setActive(btnId) {
+            document.querySelectorAll('.btn-group button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+        }
+    </script>
+</body>
+</html>

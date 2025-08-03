@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ROM Test Log</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        table { margin:30px auto; border-collapse:collapse; min-width:500px; }
+        th, td { padding:9px 17px; border:1px solid #bbb; }
+        th { background:#f2f2f7; }
+        .rom-btn {
+            display: inline-block;
+            padding: 15px 32px;
+            background-color: #4a90e2;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            margin: 25px 0 40px 0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .rom-btn:hover {
+            background-color: #357ab8;
+        }
+        .homebnt {margin: 20px;}
+        .homebnt button {
+            margin: 0 4px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #4a90e2;
+            cursor: pointer;
+            color: #fff;
+    </style>
+</head>
+<body>
+    <h2>Your ROM Test History</h2>
+    <div class="homebnt" style="margin-bottom:30px;">
+        <button id="btn-trend" class="active" onclick="location.href='{% url 'rom_history_trend' %}';">View Trend</button>
+        <button id="btn-dash" class="active" onclick="location.href='{% url 'patient_dashboard' %}';">Back to Dashboard</button>
+    </div>
+    {% if rom_tests %}
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Flexion (°)</th>
+            <th>Extension (°)</th>
+            <th>Abduction (°)</th>
+            <th>Adduction (°)</th>
+        </tr>
+        {% for test in rom_tests %}
+        <tr>
+            <td>{{ test.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ test.flexion }}</td>
+            <td>{{ test.extension }}</td>
+            <td>{{ test.abduction }}</td>
+            <td>{{ test.adduction }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No ROM tests recorded yet.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shoulder ROM App</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f2f6fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 20px;
+        }
+        h1 {
+            color: #2a2f45;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2rem;
+            color: #555;
+            max-width: 600px;
+            text-align: center;
+        }
+        .nav-links {
+            margin-top: 40px;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: white;
+            background-color: #4a90e2;
+            padding: 12px 24px;
+            border-radius: 8px;
+            margin: 0 10px;
+            font-size: 1rem;
+            transition: background 0.2s ease;
+        }
+        .nav-links a:hover {
+            background-color: #357ab8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Shoulder ROM App</h1>
+    <p>
+        This platform helps patients and clinicians assess shoulder mobility,
+        detect early signs of frozen shoulder, and manage rehabilitation exercises.
+    </p>
+
+    <div class="nav-links">
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'register' %}">Register</a>
+    </div>
+</body>
+</html>

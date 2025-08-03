@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .rom-btn {
+            display: inline-block;
+            padding: 15px 32px;
+            background-color: #4a90e2;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            margin: 25px 0 40px 0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .rom-btn:hover {
+            background-color: #357ab8;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Welcome Patient: {{ request.user.username }}</h2>
+    <p>Your unique tracking code: {{ request.user.userprofile.unique_code }}</p>
+    <a href="{% url 'rom_test_intro' %}" class="rom-btn">Start New ROM Test</a>
+    <a href="{% url 'rom_history_trend' %}" class="rom-btn">View Trend</a>
+    <a href="{% url 'rom_history_log' %}" class="rom-btn">View Log</a>
+    <a href="{% url 'rehab_program' %}" class="rom-btn">My Rehab Program</a>
+    {% if active_warnings %}
+    <div style="background: #fffbe6; border: 2px solid #ffe066; color: #856404; border-radius: 10px; padding: 18px 25px; margin: 30px auto 25px auto; max-width: 700px;">
+        <center><h3>⚠️ All Active Patient Warnings</h3>
+        <h3>Please reach out to a clinic for futher intruction</h3></center>
+        
+        <ul>
+            {% for warning in active_warnings %}
+                <li style="margin-bottom: 10px;">
+                  <strong>{{ warning.user.username }}</strong>: 
+                  <strong>{{ warning.warning_type }}</strong> 
+                  ({{ warning.date }}) - {{ warning.details }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <p>No unresolved warnings for any patients!</p>
+    {% endif %}
+
+    <!-- Include partials 1. log 2. Trend -->
+    {% include "partials/rom_history_log.html" %}
+    {% include "partials/rom_history_trend.html" %}
+
+
+    <!-- <h3>Your ROM Test History</h3>
+        {% if rom_tests %}
+            <table border="1" cellpadding="6" style="margin:auto;">
+                <tr>
+                    <th>Date</th>
+                    <th>Flexion (°)</th>
+                    <th>Extension (°)</th>
+                    <th>Abduction (°)</th>
+                    <th>Adduction (°)</th>
+                </tr>
+                {% for test in rom_tests %}
+                <tr>
+                    <td>{{ test.timestamp|date:"Y-m-d H:i" }}</td>
+                    <td>{{ test.flexion }}</td>
+                    <td>{{ test.extension }}</td>
+                    <td>{{ test.abduction }}</td>
+                    <td>{{ test.adduction }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>No ROM tests recorded yet.</p>
+        {% endif %} -->
+
+    <a href="{% url 'logout' %}">Logout</a>
+</body>
+</html>

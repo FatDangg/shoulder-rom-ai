@@ -1,0 +1,18 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Details</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h2>Patient Found</h2>
+    <p>Username: {{ patient.user.username }}</p>
+    <p>Email: {{ patient.user.email }}</p>
+    <p>Tracking Code: {{ patient.unique_code }}</p>
+
+    <!-- ROM results and logs will go here later -->
+
+    <a href="{% url 'clinician_dashboard' %}">Back to Clinician Dashboard</a>
+</body>
+</html>

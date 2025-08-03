@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clinician Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f6fa;
+            padding: 50px;
+            text-align: center;
+        }
+        form {
+            margin-top: 30px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            width: 250px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            font-size: 1rem;
+            border-radius: 6px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>Welcome Clinician: {{ request.user.username }}</h2>
+
+    <p>Enter a patient's tracking code to view their records:</p>
+
+    <form method="GET" action="{% url 'view_patient' %}">
+        <input type="text" name="code" placeholder="Patient Code" required>
+        <button type="submit">View Patient</button>
+    </form>
+
+    <a href="{% url 'logout' %}">Logout</a>
+</body>
+</html>

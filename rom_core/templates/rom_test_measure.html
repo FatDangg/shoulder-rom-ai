@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ rom_type }} Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="{% static 'js/rom_tracker.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        #videoWrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+        }
+        #pose-video {
+            border: 2px solid #aaa;
+            border-radius: 10px;
+        }
+        #rom-example {
+            width: 300px;
+        }
+        #countdown, #result {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+        #result {
+            color: #333;
+        }
+    </style>
+    <style>
+    .rom-btn {
+        display: inline-block;
+        padding: 12px 28px;
+        background-color: #4a90e2;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        text-decoration: none;
+        margin: 16px 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .rom-btn:hover {
+        background-color: #357ab8;
+    }
+    </style>
+
+</head>
+<body>
+    <h2>{{ rom_type|title }} Test</h2>
+    <p>Pose like the example. Countdown begins when camera is ready.</p>
+
+    <div id="videoWrapper">
+        <video id="pose-video" width="640" height="480" autoplay muted></video>
+        <img id="rom-example" src="{% static 'img/' %}{{ rom_type|lower }}.png" alt="{{ rom_type }} Example">
+    </div>
+    <div id="countdown">Preparing...</div>
+    <div id="result">Waiting for angle...</div>
+    <a href="{% url 'rom_test_intro' %}">← Back</a>
+
+<script>
+    const romTypes = ["flexion", "extension", "abduction", "adduction"];
+    const currentIndex = romTypes.indexOf("{{ rom_type|lower }}");
+
+    function showSaveSection() {
+        // Hide everything else
+        document.getElementById("videoWrapper").style.display = "none";
+        document.getElementById("countdown").style.display = "none";
+        document.getElementById("result").style.display = "none";
+
+        // Load all results from localStorage
+        let allResults = getAllAngleResults();
+
+        // Build the summary HTML
+        let summaryHTML = "<h3>ROM Test Results</h3><ul>";
+        romTypes.forEach(rt => {
+            summaryHTML += `<li><b>${rt.charAt(0).toUpperCase() + rt.slice(1)}</b>: ${allResults[rt] ?? 'N/A'}°</li>`;
+        });
+        summaryHTML += "</ul>";
+        summaryHTML += `<button id="save-btn" class="rom-btn">Save ROM Test</button>`;
+        summaryHTML += `<button id="cancel-btn" class="rom-btn" style="background:#aaa; color:#333; margin-left:10px;">Cancel</button>`;
+
+        // Add to the page
+        const saveSection = document.createElement("div");
+        saveSection.id = "save-section";
+        saveSection.innerHTML = summaryHTML;
+        document.body.appendChild(saveSection);
+
+        // Add event listeners
+        document.getElementById("save-btn").onclick = saveAllROMResults;
+        document.getElementById("cancel-btn").onclick = cancelROMTest;
+    }
+
+    function nextROM() {
+        if (currentIndex < romTypes.length - 1) {
+            const nextROM = romTypes[currentIndex + 1];
+            window.location.href = `/rom-test/run/${nextROM}/`;
+        } else {
+            // All tests finished, show summary and Save/Cancel
+            showSaveSection();
+        }
+    }
+
+    startROMTracking("{{ rom_type|lower }}", nextROM);
+</script>
+
+
+</body>
+</html>
