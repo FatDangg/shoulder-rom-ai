@@ -32,6 +32,21 @@
     <a href="{% url 'rom_history_trend' %}" class="rom-btn">View Trend</a>
     <a href="{% url 'rom_history_log' %}" class="rom-btn">View Log</a>
     <a href="{% url 'rehab_program' %}" class="rom-btn">My Rehab Program</a>
+    <!-- <button onclick="showChatbot()">💬 AI Doctor Chatbot</button>
+    <div id="chatbot-modal" style="display:none;">
+        <div id="chat-window" style="height:300px; overflow-y:auto; background:#f9f9f9; border-radius:8px; padding:10px;"></div>
+        <form id="chat-form" style="margin-top:10px;">
+            <input type="text" id="chat-input" placeholder="Ask the AI doctor anything..." style="width:75%;padding:8px;" autocomplete="off" />
+            <button type="submit">Send</button>
+        </form>
+        <button onclick="hideChatbot()" style="margin-top:8px;">Close</button>
+        <script>
+            function showChatbot() { document.getElementById('chatbot-modal').style.display = 'block'; }
+            function hideChatbot() { document.getElementById('chatbot-modal').style.display = 'none'; }
+        </script>
+
+    </div> -->
+
     {% if active_warnings %}
     <div style="background: #fffbe6; border: 2px solid #ffe066; color: #856404; border-radius: 10px; padding: 18px 25px; margin: 30px auto 25px auto; max-width: 700px;">
         <center><h3>⚠️ All Active Patient Warnings</h3>
@@ -79,6 +94,35 @@
         {% else %}
             <p>No ROM tests recorded yet.</p>
         {% endif %} -->
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+
+        chatForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const userMsg = chatInput.value.trim();
+            if (!userMsg) return;
+            chatWindow.innerHTML += `<div><b>You:</b> ${userMsg}</div>`;
+            chatInput.value = '';
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            // Send to backend
+            const resp = await fetch('{% url "chatbot_ask" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({message: userMsg})
+            });
+            const data = await resp.json();
+            chatWindow.innerHTML += `<div style="color:#2e7d32;"><b>AI:</b> ${data.reply}</div>`;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        };
+    </script>
+
 
     <a href="{% url 'logout' %}">Logout</a>
 </body>

@@ -17,6 +17,8 @@ urlpatterns = [
     path('rehab/', views.rehab_program, name='rehab_program'),
     path('rehab/mark/<int:exercise_id>/', views.mark_exercise_complete, name='mark_exercise_complete'),
     path('clinician/resolve_warning/<int:warning_id>/', views.resolve_warning, name='resolve_warning'),
+    path('chatbot/ask/', views.chatbot_ask, name='chatbot_ask'),
+    path('export/pdf/', views.export_rom_pdf, name='export_rom_pdf'),
 
 
 ]

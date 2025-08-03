@@ -321,3 +321,122 @@ def resolve_warning(request, warning_id):
     return redirect('clinician_dashboard')
 
 
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+# Google Gemini import (assuming you have google-generativeai installed)
+import google.generativeai as genai
+
+genai.configure(api_key="AIzaSyDxtCuqZMliYZNPNAuw2Lfm3y8FnV270QA")
+
+@csrf_exempt   # For demo/dev only. For production, use proper CSRF protection!
+@login_required
+def chatbot_ask(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_message = data.get('message', '')
+        # Safety: Check message length/content here if needed
+
+        # Gemini interaction
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(user_message)
+        reply = response.text if hasattr(response, 'text') else str(response)
+
+        return JsonResponse({'reply': reply})
+    return JsonResponse({'reply': 'Error: Only POST allowed.'}, status=400)
+
+
+
+import base64
+from io import BytesIO
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+
+from .models import ROMTest
+
+import base64
+from io import BytesIO
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from PIL import Image as PilImage
+from .models import ROMTest
+
+@login_required
+def export_rom_pdf(request):
+    if request.method != "POST":
+        return HttpResponse("Invalid request", status=400)
+    
+    # 1. Get chart image from form POST (the hidden input)
+    chart_image_b64 = request.POST.get("chart_image_field")
+    if not chart_image_b64:
+        return HttpResponse("No image data", status=400)
+    
+    try:
+        header, img_data = chart_image_b64.split(',', 1)
+        chart_image_bytes = base64.b64decode(img_data)
+        chart_image_io = BytesIO(chart_image_bytes)
+        # Ensure image is RGB to avoid black/white inversion
+        img = PilImage.open(chart_image_io).convert('RGB')
+        rgb_buffer = BytesIO()
+        img.save(rgb_buffer, format='JPEG')
+        rgb_buffer.seek(0)
+    except Exception as e:
+        return HttpResponse(f"Error decoding or processing image: {e}", status=400)
+
+    # 2. Create PDF document
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Title and user info
+    story.append(Paragraph("Shoulder ROM Report", styles['Title']))
+    story.append(Spacer(1, 20))
+    story.append(Paragraph(f"Patient: {request.user.username}", styles['Normal']))
+    story.append(Spacer(1, 10))
+
+    # 3. Add chart image, scaled to fit
+    img_width = 400  # points (about 5.5in)
+    img_height = int(img.size[1] * (img_width / img.size[0]))
+    story.append(Image(rgb_buffer, width=img_width, height=img_height))
+    story.append(Spacer(1, 16))
+
+    # 4. Add ROM history table
+    rom_tests = ROMTest.objects.filter(user=request.user).order_by('timestamp')
+    table_data = [["Date", "Flexion", "Extension", "Abduction", "Adduction"]]
+    for test in rom_tests:
+        table_data.append([
+            test.timestamp.strftime("%Y-%m-%d"),
+            f"{test.flexion:.1f}",
+            f"{test.extension:.1f}",
+            f"{test.abduction:.1f}",
+            f"{test.adduction:.1f}",
+        ])
+    table = Table(table_data, hAlign='LEFT')
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.lightblue),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("ALIGN", (1,1), (-1,-1), "CENTER"),
+    ]))
+    story.append(table)
+    story.append(Spacer(1, 24))
+
+    # 5. Optional: Closing message
+    story.append(Paragraph("Thank you for using the Shoulder ROM Tracker!", styles['Italic']))
+
+    # 6. Build and return the PDF
+    doc.build(story)
+    buffer.seek(0)
+    return HttpResponse(buffer.getvalue(), content_type='application/pdf')
